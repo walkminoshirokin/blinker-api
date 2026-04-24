@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Query, HTTPException
+from fastapi.responses import JSONResponse
 from playwright.async_api import async_playwright
 from scraper import get_blinker_horses, run_scraping
 
@@ -22,6 +23,9 @@ async def scrape(race_id: str = Query(..., description="レースID (例: 202605
 async def scrape_all():
     try:
         results = await run_scraping()
-        return {"results": results}
+        return JSONResponse(
+            content={"results": results},
+            media_type="application/json; charset=utf-8"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
