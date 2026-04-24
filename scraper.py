@@ -12,7 +12,7 @@ async def get_blinker_horses(page, race_id: str):
     url = f"https://race.netkeiba.com/race/newspaper.html?race_id={race_id}&rf=shutuba_submenu"
     await page.goto(url, timeout=60000)
     await page.wait_for_load_state("load")
-    await page.wait_for_timeout(2000)
+    await page.wait_for_timeout(1000)
     horses = await page.evaluate("""() => {
         const results = [];
         document.querySelectorAll('span.Mark.First').forEach(span => {
@@ -34,45 +34,43 @@ async def get_blinker_horses(page, race_id: str):
     return horses
 
 
-async def get_all_blinker_horses(page):
-    results = {}
-    for basho, base in KAISHO.items():
-        basho_results = {}
+async def run_scraping():
+    kaisho = {
+        "東京": "2026050201",
+        "京都": "2026080301",
+        "福島": "2026030105",
+    }
+    all_results = {}
+    for basho, base in kaisho.items():
+        all_results[basho] = {}
         for i in range(1, 13):
             race_id = f"{base}{str(i).zfill(2)}"
-            try:
-                horses = await get_blinker_horses(page, race_id)
-                basho_results[f"{i}R"] = horses
-            except Exception as e:
-                basho_results[f"{i}R"] = {"error": str(e)}
-        results[basho] = basho_results
-    return results
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])
+                page = await browser.new_page()
+                try:
+                    horses = await get_blinker_horses(page, race_id)
+                    all_results[basho][f"{i}R"] = horses
+                except Exception as e:
+                    all_results[basho][f"{i}R"] = {"error": str(e)}
+                finally:
+                    await browser.close()
+    return all_results
 
 
 async def main():
-    kaisho = KAISHO
-
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
-
-        for basho, base in kaisho.items():
-            print(f"\n{'='*30}")
-            print(f"  {basho}")
-            print(f"{'='*30}")
-
-            for i in range(1, 13):
-                race_id = f"{base}{str(i).zfill(2)}"
-                try:
-                    horses = await get_blinker_horses(page, race_id)
-                    if horses:
-                        print(f"  {i}R ブリンカー装着馬:")
-                        for h in horses:
-                            print(f"    馬番{h['馬番']} {h['馬名']}")
-                    else:
-                        print(f"  {i}R: Bマークなし")
-                except Exception as e:
-                    print(f"  {i}R: エラー → {e}")
-
-        await browser.close()
+    results = await run_scraping()
+    for basho, races in results.items():
+        print(f"\n{'='*30}")
+        print(f"  {basho}")
+        print(f"{'='*30}")
+        for race_key, horses in races.items():
+            if isinstance(horses, dict) and "error" in horses:
+                print(f"  {race_key}: エラー → {horses['error']}")
+            elif horses:
+                print(f"  {race_key} ブリンカー装着馬:")
+                for h in horses:
+                    print(f"    馬番{h['馬番']} {h['馬名']}")
+            else:
+                print(f"  {race_key}: Bマークなし")
 

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Query, HTTPException
 from playwright.async_api import async_playwright
-from scraper import get_blinker_horses, get_all_blinker_horses
+from scraper import get_blinker_horses, run_scraping
 
 app = FastAPI()
 
@@ -9,7 +9,7 @@ app = FastAPI()
 async def scrape(race_id: str = Query(..., description="レースID (例: 202605020101)")):
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
+            browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])
             page = await browser.new_page()
             horses = await get_blinker_horses(page, race_id)
             await browser.close()
@@ -21,11 +21,7 @@ async def scrape(race_id: str = Query(..., description="レースID (例: 202605
 @app.get("/scrape/all")
 async def scrape_all():
     try:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page()
-            results = await get_all_blinker_horses(page)
-            await browser.close()
+        results = await run_scraping()
         return {"results": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
