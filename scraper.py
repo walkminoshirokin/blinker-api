@@ -1,6 +1,12 @@
 import asyncio
 from playwright.async_api import async_playwright
 
+KAISHO = {
+    "東京": "2026050201",
+    "京都": "2026080301",
+    "福島": "2026030105",
+}
+
 
 async def get_blinker_horses(page, race_id: str):
     url = f"https://race.netkeiba.com/race/newspaper.html?race_id={race_id}&rf=shutuba_submenu"
@@ -28,12 +34,23 @@ async def get_blinker_horses(page, race_id: str):
     return horses
 
 
+async def get_all_blinker_horses(page):
+    results = {}
+    for basho, base in KAISHO.items():
+        basho_results = {}
+        for i in range(1, 13):
+            race_id = f"{base}{str(i).zfill(2)}"
+            try:
+                horses = await get_blinker_horses(page, race_id)
+                basho_results[f"{i}R"] = horses
+            except Exception as e:
+                basho_results[f"{i}R"] = {"error": str(e)}
+        results[basho] = basho_results
+    return results
+
+
 async def main():
-    kaisho = {
-        "東京": "2026050201",
-        "京都": "2026080301",
-        "福島": "2026030105",
-    }
+    kaisho = KAISHO
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
