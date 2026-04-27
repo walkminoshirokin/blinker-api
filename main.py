@@ -41,7 +41,10 @@ async def shutdown():
 
 @app.get("/")
 async def root():
-    return FileResponse("index.html")
+    index_path = Path("/app/index.html")
+    if not index_path.exists():
+        index_path = Path("index.html")
+    return FileResponse(str(index_path))
 
 
 @app.get("/scrape")
