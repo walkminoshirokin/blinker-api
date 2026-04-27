@@ -5,7 +5,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, Query, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from playwright.async_api import async_playwright
 
 from scraper import get_blinker_horses, run_scraping
@@ -37,6 +37,11 @@ async def startup():
 async def shutdown():
     scheduler.shutdown()
     logger.info("スケジューラー停止")
+
+
+@app.get("/")
+async def root():
+    return FileResponse("index.html")
 
 
 @app.get("/scrape")
