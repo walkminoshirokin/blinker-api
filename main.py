@@ -1,6 +1,8 @@
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.responses import JSONResponse
@@ -15,10 +17,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-RESULT_PATH = Path("/app/data/result.json")
+JST = ZoneInfo("Asia/Tokyo")
 
 app = FastAPI()
 scheduler = create_scheduler()
+
+
+def today_jst() -> str:
+    return datetime.now(JST).strftime("%Y%m%d")
 
 
 @app.on_event("startup")
@@ -50,24 +56,27 @@ async def scrape(race_id: str = Query(..., description="レースID (例: 202605
 
 
 @app.get("/scrape/all")
-async def scrape_all():
-    logger.info("GET /scrape/all リクエスト受信")
-    if not RESULT_PATH.exists():
+async def scrape_all(date: str = Query(None, description="日付 (例: 20260427)")):
+    date_str = date or today_jst()
+    result_path = Path(f"/app/data/result_{date_str}.json")
+    logger.info("GET /scrape/all リクエスト受信: date=%s", date_str)
+    if not result_path.exists():
         return JSONResponse(
             content={"error": "データ未生成。しばらくお待ちください"},
             media_type="application/json; charset=utf-8",
         )
-    with open(RESULT_PATH, encoding="utf-8") as f:
+    with open(result_path, encoding="utf-8") as f:
         data = json.load(f)
     logger.info("GET /scrape/all 返却: saved_at=%s", data.get("saved_at"))
     return JSONResponse(content=data, media_type="application/json; charset=utf-8")
 
 
 @app.post("/scrape/run")
-async def scrape_run():
-    logger.info("POST /scrape/run リクエスト受信")
+async def scrape_run(date: str = Query(None, description="日付 (例: 20260427)")):
+    date_str = date or today_jst()
+    logger.info("POST /scrape/run リクエスト受信: date=%s", date_str)
     try:
-        results = await run_scraping()
+        results = await run_scraping(date_str)
         total = sum(len(races) for races in results.values())
         logger.info("POST /scrape/run 完了: %d 会場, 合計 %d レース処理", len(results), total)
         return JSONResponse(

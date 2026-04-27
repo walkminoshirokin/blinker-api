@@ -1,13 +1,13 @@
 import asyncio
 import json
 import logging
+import re
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from playwright.async_api import async_playwright
 
-RESULT_PATH = Path("/app/data/result.json")
 JST = ZoneInfo("Asia/Tokyo")
 
 logging.basicConfig(
@@ -16,11 +16,43 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-KAISHO = {
-    "東京": "2026050201",
-    "京都": "2026080301",
-    "福島": "2026030105",
+VENUE_CODE = {
+    "01": "札幌", "02": "函館", "03": "福島", "04": "新潟", "05": "東京",
+    "06": "中山", "07": "中京", "08": "京都", "09": "阪神", "10": "小倉",
 }
+
+
+async def get_kaisai_info(date_str: str) -> dict:
+    url = f"https://race.netkeiba.com/top/?kaisai_date={date_str}"
+    logger.info("開催情報取得開始: %s", url)
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])
+        page = await browser.new_page()
+        try:
+            await page.goto(url, timeout=60000)
+            await page.wait_for_load_state("load")
+            await page.wait_for_timeout(2000)
+            hrefs = await page.evaluate("""() => {
+                const links = document.querySelectorAll('a[href*="newspaper.html?race_id="]');
+                return Array.from(links).map(a => a.href);
+            }""")
+        finally:
+            await browser.close()
+
+    result = {}
+    for href in hrefs:
+        m = re.search(r'race_id=(\d{12})', href)
+        if not m:
+            continue
+        race_id = m.group(1)
+        base_id = race_id[:10]
+        venue_code = race_id[4:6]
+        venue_name = VENUE_CODE.get(venue_code)
+        if venue_name and venue_name not in result:
+            result[venue_name] = base_id
+
+    logger.info("開催情報取得完了: %s", result)
+    return result
 
 
 async def get_blinker_horses(page, race_id: str):
@@ -52,12 +84,13 @@ async def get_blinker_horses(page, race_id: str):
     return horses
 
 
-async def run_scraping():
-    kaisho = {
-        "東京": "2026050201",
-        "京都": "2026080301",
-        "福島": "2026030105",
-    }
+async def run_scraping(date_str: str = None):
+    if date_str is None:
+        date_str = datetime.now(JST).strftime("%Y%m%d")
+
+    kaisho = await get_kaisai_info(date_str)
+    result_path = Path(f"/app/data/result_{date_str}.json")
+
     all_results = {}
     logger.info("スクレイピング開始: %d 会場", len(kaisho))
     for basho, base in kaisho.items():
@@ -81,10 +114,10 @@ async def run_scraping():
     logger.info("スクレイピング完了")
 
     saved_at = datetime.now(JST).isoformat()
-    RESULT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(RESULT_PATH, "w", encoding="utf-8") as f:
+    result_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(result_path, "w", encoding="utf-8") as f:
         json.dump({"saved_at": saved_at, "results": all_results}, f, ensure_ascii=False, indent=2)
-    logger.info("result.json 保存完了: %s", saved_at)
+    logger.info("result_%s.json 保存完了: %s", date_str, saved_at)
 
     return all_results
 
@@ -104,4 +137,3 @@ async def main():
                     print(f"    馬番{h['馬番']} {h['馬名']}")
             else:
                 print(f"  {race_key}: Bマークなし")
-
