@@ -86,6 +86,54 @@ async def get_blinker_horses(page, race_id: str):
     return horses
 
 
+async def get_race_result(page, race_id: str):
+    """結果ページから着順と複勝払戻を取得"""
+    url = f"https://race.netkeiba.com/race/result.html?race_id={race_id}&rf=race_submenu"
+    try:
+        await page.goto(url, timeout=60000)
+        await page.wait_for_load_state("load")
+        await page.wait_for_timeout(1000)
+        return await page.evaluate("""() => {
+            const top3 = [];
+            const rows = document.querySelectorAll('table tr');
+            for (const row of rows) {
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 4) continue;
+                const rank = cells[0].textContent.trim();
+                if (['1', '2', '3'].includes(rank)) {
+                    top3.push({
+                        着順: rank,
+                        馬番: cells[1].textContent.trim(),
+                        馬名: cells[3].textContent.trim()
+                    });
+                }
+                if (top3.length >= 3) break;
+            }
+
+            const fukusho = [];
+            const fukushoRow = document.querySelector('tr.Fukusho');
+            if (fukushoRow) {
+                const nums = fukushoRow.querySelectorAll('td.Result div span');
+                const numList = Array.from(nums)
+                    .map(s => s.textContent.trim())
+                    .filter(s => s !== '');
+
+                const payoutEl = fukushoRow.querySelector('td.Payout span');
+                const payouts = payoutEl
+                    ? payoutEl.innerHTML.split('<br>').map(s => s.replace(/<[^>]+>/g, '').trim()).filter(Boolean)
+                    : [];
+
+                numList.forEach((num, i) => {
+                    fukusho.push({ 馬番: num, 払戻: payouts[i] || '' });
+                });
+            }
+
+            return { top3, fukusho, has_result: top3.length > 0 };
+        }""")
+    except Exception:
+        return {"top3": [], "fukusho": [], "has_result": False}
+
+
 async def run_scraping(date_str: str = None):
     if date_str is None:
         date_str = datetime.now(JST).strftime("%Y%m%d")
@@ -106,7 +154,24 @@ async def run_scraping(date_str: str = None):
                 page = await browser.new_page()
                 try:
                     horses = await get_blinker_horses(page, race_id)
-                    all_results[basho][f"{i}R"] = horses
+                    race_result = await get_race_result(page, race_id)
+                    race_entries = []
+                    for horse in horses:
+                        uma_num = str(horse["馬番"])
+                        chakujun = "-"
+                        for t in race_result["top3"]:
+                            if t["馬番"] == uma_num:
+                                chakujun = t["着順"]
+                                break
+                        race_entries.append({
+                            "馬番": horse["馬番"],
+                            "馬名": horse["馬名"],
+                            "has_result": race_result["has_result"],
+                            "top3": race_result["top3"],
+                            "fukusho": race_result["fukusho"],
+                            "着順": chakujun,
+                        })
+                    all_results[basho][f"{i}R"] = race_entries
                     logger.info("  %sR 完了: %d 頭", i, len(horses))
                 except Exception as e:
                     logger.error("  %sR エラー (race_id=%s): %s", i, race_id, e)
@@ -130,12 +195,12 @@ async def main():
         print(f"\n{'='*30}")
         print(f"  {basho}")
         print(f"{'='*30}")
-        for race_key, horses in races.items():
-            if isinstance(horses, dict) and "error" in horses:
-                print(f"  {race_key}: エラー → {horses['error']}")
-            elif horses:
+        for race_key, entries in races.items():
+            if isinstance(entries, dict) and "error" in entries:
+                print(f"  {race_key}: エラー → {entries['error']}")
+            elif entries:
                 print(f"  {race_key} ブリンカー装着馬:")
-                for h in horses:
-                    print(f"    馬番{h['馬番']} {h['馬名']}")
+                for h in entries:
+                    print(f"    馬番{h['馬番']} {h['馬名']} 着順:{h['着順']}")
             else:
                 print(f"  {race_key}: Bマークなし")
