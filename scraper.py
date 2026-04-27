@@ -113,16 +113,19 @@ async def get_race_result(page, race_id: str):
             const fukusho = [];
             const fukushoRow = document.querySelector('tr.Fukusho');
             if (fukushoRow) {
-                const nums = fukushoRow.querySelectorAll('td.Result div span');
-                const numList = Array.from(nums)
-                    .map(s => s.textContent.trim())
-                    .filter(s => s !== '');
-
+                // divごとに馬番を取得（divが1頭分のブロック、3divで1頭）
+                const divs = fukushoRow.querySelectorAll('td.Result div');
+                const numList = [];
+                for (let i = 0; i < divs.length; i += 3) {
+                    const span = divs[i] ? divs[i].querySelector('span') : null;
+                    const num = span ? span.textContent.trim() : '';
+                    if (num !== '') numList.push(num);
+                }
+                // 払戻金額（<br>区切り）
                 const payoutEl = fukushoRow.querySelector('td.Payout span');
                 const payouts = payoutEl
                     ? payoutEl.innerHTML.split('<br>').map(s => s.replace(/<[^>]+>/g, '').trim()).filter(Boolean)
                     : [];
-
                 numList.forEach((num, i) => {
                     fukusho.push({ 馬番: num, 払戻: payouts[i] || '' });
                 });
