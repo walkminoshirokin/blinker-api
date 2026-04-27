@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ブリンカー装着馬チェッカー</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f5f3;
+    --bg-info: #E6F1FB;
+    --bg-success: #EAF3DE;
+    --text: #1a1a1a;
+    --text-secondary: #6b6b6b;
+    --text-tertiary: #999;
+    --text-info: #0C447C;
+    --text-success: #3B6D11;
+    --border: rgba(0,0,0,0.12);
+    --border-hover: rgba(0,0,0,0.25);
+    --border-info: #85B7EB;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --accent: #185FA5;
+    --accent-hover: #0C447C;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1e;
+      --bg-secondary: #2a2a2a;
+      --bg-info: #042C53;
+      --bg-success: #173404;
+      --text: #e8e8e8;
+      --text-secondary: #aaa;
+      --text-tertiary: #666;
+      --text-info: #85B7EB;
+      --text-success: #97C459;
+      --border: rgba(255,255,255,0.12);
+      --border-hover: rgba(255,255,255,0.25);
+      --border-info: #185FA5;
+      --accent: #378ADD;
+      --accent-hover: #85B7EB;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg-secondary);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .header {
+    margin-bottom: 2rem;
+  }
+
+  .title {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .controls {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .controls label {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  input[type="date"] {
+    height: 36px;
+    padding: 0 12px;
+    border: 0.5px solid var(--border-hover);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+  }
+
+  input[type="date"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(24,95,165,0.12);
+  }
+
+  .btn {
+    height: 36px;
+    padding: 0 16px;
+    border: 0.5px solid var(--border-hover);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn:hover { background: var(--bg-secondary); }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+  .saved-at {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-bottom: 1rem;
+    text-align: right;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .metric {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem;
+    text-align: center;
+  }
+
+  .metric-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .metric-value {
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .metric-sub {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+
+  .venue-section {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .venue-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .venue-badge {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: var(--radius-md);
+    background: var(--bg-info);
+    color: var(--text-info);
+    font-weight: 400;
+  }
+
+  .race-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
+  }
+
+  .race-card {
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    min-height: 60px;
+  }
+
+  .race-card.has-horse {
+    border-color: var(--border-info);
+    background: var(--bg);
+  }
+
+  .race-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .horse-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+  }
+
+  .horse-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--bg-info);
+    color: var(--text-info);
+    font-size: 11px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .horse-name {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .no-horse {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  .status-msg {
+    font-size: 14px;
+    color: var(--text-secondary);
+    padding: 3rem;
+    text-align: center;
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+
+  .error-msg {
+    font-size: 14px;
+    color: #A32D2D;
+    padding: 1rem 1.25rem;
+    background: #FCEBEB;
+    border-radius: var(--radius-md);
+  }
+
+  @media (max-width: 480px) {
+    .race-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+    .title { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="title">ブリンカー装着馬チェッカー</div>
+    <div class="subtitle">赤Bマークの馬を競馬場・レースごとに一覧表示</div>
+  </div>
+
+  <div class="controls">
+    <label for="dateInput">開催日</label>
+    <input type="date" id="dateInput">
+    <button class="btn btn-primary" onclick="loadData()">データ取得</button>
+    <button class="btn" onclick="loadToday()">今日</button>
+  </div>
+
+  <div id="savedAt" class="saved-at"></div>
+  <div id="metrics" class="metrics" style="display:none"></div>
+  <div id="content"><div class="status-msg">日付を選んでデータを取得してください</div></div>
+
+</div>
+
+<script>
+const API = "https://blinker-api-production.up.railway.app";
+
+function todayJST() {
+  const d = new Date();
+  const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  return jst.toISOString().slice(0, 10);
+}
+
+function setDefaultDate() {
+  document.getElementById("dateInput").value = todayJST();
+}
+
+function loadToday() {
+  setDefaultDate();
+  loadData();
+}
+
+async function loadData() {
+  const val = document.getElementById("dateInput").value;
+  if (!val) return;
+  const dateStr = val.replace(/-/g, "");
+
+  document.getElementById("content").innerHTML = '<div class="status-msg">データを取得中...</div>';
+  document.getElementById("metrics").style.display = "none";
+  document.getElementById("savedAt").textContent = "";
+
+  try {
+    const res = await fetch(`${API}/scrape/all?date=${dateStr}`);
+    const json = await res.json();
+    if (json.error) {
+      document.getElementById("content").innerHTML = `<div class="error-msg">${json.error}</div>`;
+      return;
+    }
+    renderData(json);
+  } catch (e) {
+    document.getElementById("content").innerHTML = '<div class="error-msg">APIに接続できませんでした。しばらく待ってから再試行してください。</div>';
+  }
+}
+
+function renderData(json) {
+  const results = json.results || {};
+  const savedAt = json.saved_at;
+
+  if (savedAt) {
+    const dt = new Date(savedAt);
+    document.getElementById("savedAt").textContent = "最終更新: " + dt.toLocaleString("ja-JP");
+  }
+
+  const venues = Object.keys(results);
+  let totalHorses = 0, totalRaces = 0;
+  venues.forEach(v => {
+    Object.values(results[v]).forEach(horses => {
+      if (horses.length > 0) { totalRaces++; totalHorses += horses.length; }
+    });
+  });
+
+  const metrics = document.getElementById("metrics");
+  metrics.innerHTML = `
+    <div class="metric">
+      <div class="metric-label">開催場数</div>
+      <div class="metric-value">${venues.length}</div>
+      <div class="metric-sub">競馬場</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Bマーク馬</div>
+      <div class="metric-value">${totalHorses}</div>
+      <div class="metric-sub">頭</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">該当レース</div>
+      <div class="metric-value">${totalRaces}</div>
+      <div class="metric-sub">レース</div>
+    </div>
+  `;
+  metrics.style.display = "grid";
+
+  if (venues.length === 0) {
+    document.getElementById("content").innerHTML = '<div class="status-msg">この日のデータはありません</div>';
+    return;
+  }
+
+  let html = "";
+  for (const [venue, races] of Object.entries(results)) {
+    const count = Object.values(races).reduce((s, h) => s + h.length, 0);
+    html += `
+      <div class="venue-section">
+        <div class="venue-header">
+          ${venue}
+          <span class="venue-badge">Bマーク ${count}頭</span>
+        </div>
+        <div class="race-grid">
+    `;
+    for (const [race, horses] of Object.entries(races)) {
+      const has = horses.length > 0;
+      html += `<div class="race-card ${has ? "has-horse" : ""}">
+        <div class="race-label">${race}</div>`;
+      if (has) {
+        horses.forEach(h => {
+          html += `<div class="horse-row">
+            <div class="horse-num">${h.馬番}</div>
+            <div class="horse-name">${h.馬名}</div>
+          </div>`;
+        });
+      } else {
+        html += `<div class="no-horse">なし</div>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  document.getElementById("content").innerHTML = html;
+}
+
+setDefaultDate();
+</script>
+</body>
+</html>
