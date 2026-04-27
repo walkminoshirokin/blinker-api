@@ -16,43 +16,45 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-VENUE_CODE = {
-    "01": "札幌", "02": "函館", "03": "福島", "04": "新潟", "05": "東京",
-    "06": "中山", "07": "中京", "08": "京都", "09": "阪神", "10": "小倉",
+BASHO_CODE = {
+    "01": "札幌", "02": "函館", "03": "福島", "04": "新潟",
+    "05": "東京", "06": "中山", "07": "中京", "08": "京都",
+    "09": "阪神", "10": "小倉"
 }
 
 
-async def get_kaisai_info(date_str: str) -> dict:
+async def get_kaisai_info(date_str: str):
     url = f"https://race.netkeiba.com/top/?kaisai_date={date_str}"
-    logger.info("開催情報取得開始: %s", url)
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])
+        browser = await p.chromium.launch(
+            headless=True,
+            args=["--no-sandbox", "--disable-dev-shm-usage"]
+        )
         page = await browser.new_page()
-        try:
-            await page.goto(url, timeout=60000)
-            await page.wait_for_load_state("load")
-            await page.wait_for_timeout(2000)
-            hrefs = await page.evaluate("""() => {
-                const links = document.querySelectorAll('a[href*="newspaper.html?race_id="]');
-                return Array.from(links).map(a => a.href);
-            }""")
-        finally:
-            await browser.close()
+        await page.goto(url, timeout=60000)
+        await page.wait_for_load_state("load")
+        await page.wait_for_timeout(5000)
+        all_race_ids = await page.evaluate("""() => {
+            const anchors = document.querySelectorAll('a[href*="race_id"]');
+            return Array.from(anchors).map(a => {
+                const match = a.href.match(/race_id=(\\d{12})/);
+                return match ? match[1] : null;
+            }).filter(Boolean);
+        }""")
+        await browser.close()
 
-    result = {}
-    for href in hrefs:
-        m = re.search(r'race_id=(\d{12})', href)
-        if not m:
-            continue
-        race_id = m.group(1)
-        base_id = race_id[:10]
-        venue_code = race_id[4:6]
-        venue_name = VENUE_CODE.get(venue_code)
-        if venue_name and venue_name not in result:
-            result[venue_name] = base_id
+    # 競馬場ごとに最小レース番号のベースIDを採用
+    kaisho_tmp = {}
+    for race_id in set(all_race_ids):
+        code = race_id[4:6]
+        base = race_id[:10]
+        race_num = int(race_id[10:12])
+        name = BASHO_CODE.get(code, f"不明({code})")
+        if name not in kaisho_tmp or race_num < kaisho_tmp[name]["race_num"]:
+            kaisho_tmp[name] = {"base": base, "race_num": race_num}
 
-    logger.info("開催情報取得完了: %s", result)
-    return result
+    kaisho = {name: info["base"] for name, info in kaisho_tmp.items()}
+    return kaisho
 
 
 async def get_blinker_horses(page, race_id: str):
