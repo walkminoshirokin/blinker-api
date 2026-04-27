@@ -12,14 +12,17 @@
     --bg-secondary: #f5f5f3;
     --bg-info: #E6F1FB;
     --bg-success: #EAF3DE;
+    --bg-danger: #FCEBEB;
     --text: #1a1a1a;
     --text-secondary: #6b6b6b;
     --text-tertiary: #999;
     --text-info: #0C447C;
     --text-success: #3B6D11;
+    --text-danger: #A32D2D;
     --border: rgba(0,0,0,0.12);
     --border-hover: rgba(0,0,0,0.25);
     --border-info: #85B7EB;
+    --border-success: #97C459;
     --radius-md: 8px;
     --radius-lg: 12px;
     --accent: #185FA5;
@@ -32,14 +35,17 @@
       --bg-secondary: #2a2a2a;
       --bg-info: #042C53;
       --bg-success: #173404;
+      --bg-danger: #3a1010;
       --text: #e8e8e8;
       --text-secondary: #aaa;
       --text-tertiary: #666;
       --text-info: #85B7EB;
       --text-success: #97C459;
+      --text-danger: #F09595;
       --border: rgba(255,255,255,0.12);
       --border-hover: rgba(255,255,255,0.25);
       --border-info: #185FA5;
+      --border-success: #3B6D11;
       --accent: #378ADD;
       --accent-hover: #85B7EB;
     }
@@ -53,26 +59,10 @@
     padding: 2rem 1rem;
   }
 
-  .container {
-    max-width: 900px;
-    margin: 0 auto;
-  }
-
-  .header {
-    margin-bottom: 2rem;
-  }
-
-  .title {
-    font-size: 24px;
-    font-weight: 500;
-    color: var(--text);
-    margin-bottom: 4px;
-  }
-
-  .subtitle {
-    font-size: 14px;
-    color: var(--text-secondary);
-  }
+  .container { max-width: 960px; margin: 0 auto; }
+  .header { margin-bottom: 2rem; }
+  .title { font-size: 24px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: var(--text-secondary); }
 
   .controls {
     background: var(--bg);
@@ -85,11 +75,7 @@
     flex-wrap: wrap;
     margin-bottom: 1.5rem;
   }
-
-  .controls label {
-    font-size: 14px;
-    color: var(--text-secondary);
-  }
+  .controls label { font-size: 14px; color: var(--text-secondary); }
 
   input[type="date"] {
     height: 36px;
@@ -101,7 +87,6 @@
     color: var(--text);
     outline: none;
   }
-
   input[type="date"]:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(24,95,165,0.12);
@@ -118,24 +103,12 @@
     cursor: pointer;
     transition: background 0.15s;
   }
-
   .btn:hover { background: var(--bg-secondary); }
   .btn:active { transform: scale(0.98); }
-
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-  }
-
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
   .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 
-  .saved-at {
-    font-size: 12px;
-    color: var(--text-tertiary);
-    margin-bottom: 1rem;
-    text-align: right;
-  }
+  .saved-at { font-size: 12px; color: var(--text-tertiary); margin-bottom: 1rem; text-align: right; }
 
   .metrics {
     display: grid;
@@ -143,7 +116,6 @@
     gap: 12px;
     margin-bottom: 1.5rem;
   }
-
   .metric {
     background: var(--bg);
     border: 0.5px solid var(--border);
@@ -151,24 +123,9 @@
     padding: 1rem 1.25rem;
     text-align: center;
   }
-
-  .metric-label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 6px;
-  }
-
-  .metric-value {
-    font-size: 28px;
-    font-weight: 500;
-    color: var(--text);
-  }
-
-  .metric-sub {
-    font-size: 12px;
-    color: var(--text-tertiary);
-    margin-top: 2px;
-  }
+  .metric-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  .metric-value { font-size: 28px; font-weight: 500; color: var(--text); }
+  .metric-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
 
   .venue-section {
     background: var(--bg);
@@ -177,7 +134,6 @@
     padding: 1.25rem;
     margin-bottom: 1rem;
   }
-
   .venue-header {
     display: flex;
     align-items: center;
@@ -186,7 +142,6 @@
     font-size: 18px;
     font-weight: 500;
   }
-
   .venue-badge {
     font-size: 12px;
     padding: 3px 10px;
@@ -198,7 +153,7 @@
 
   .race-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
     gap: 8px;
   }
 
@@ -207,22 +162,20 @@
     border-radius: var(--radius-md);
     padding: 10px 12px;
     background: var(--bg-secondary);
-    min-height: 60px;
+    min-height: 64px;
   }
-
-  .race-card.has-horse {
-    border-color: var(--border-info);
-    background: var(--bg);
-  }
+  .race-card.has-horse { border-color: var(--border-info); background: var(--bg); }
+  .race-card.has-hit { border-color: var(--border-success); }
 
   .race-label {
     font-size: 11px;
     font-weight: 500;
     color: var(--text-secondary);
     margin-bottom: 6px;
-    text-transform: uppercase;
     letter-spacing: 0.03em;
   }
+
+  .horse-block { margin-bottom: 4px; }
 
   .horse-row {
     display: flex;
@@ -245,16 +198,40 @@
     flex-shrink: 0;
   }
 
-  .horse-name {
-    font-size: 13px;
-    color: var(--text);
-    line-height: 1.3;
+  .horse-name { font-size: 13px; color: var(--text); line-height: 1.3; flex: 1; }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+    flex-wrap: wrap;
   }
 
-  .no-horse {
-    font-size: 12px;
-    color: var(--text-tertiary);
+  .rank-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    font-weight: 500;
   }
+  .rank-hit { background: var(--bg-success); color: var(--text-success); }
+  .rank-miss { background: var(--bg-secondary); color: var(--text-tertiary); border: 0.5px solid var(--border); }
+  .rank-pending { background: var(--bg-info); color: var(--text-info); }
+
+  .fukusho-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    background: #FAEEDA;
+    color: #633806;
+    font-weight: 500;
+  }
+  @media (prefers-color-scheme: dark) {
+    .fukusho-badge { background: #412402; color: #FAC775; }
+  }
+
+  .divider { height: 0.5px; background: var(--border); margin: 6px 0; }
+  .no-horse { font-size: 12px; color: var(--text-tertiary); }
 
   .status-msg {
     font-size: 14px;
@@ -265,17 +242,16 @@
     border: 0.5px solid var(--border);
     border-radius: var(--radius-lg);
   }
-
   .error-msg {
     font-size: 14px;
-    color: #A32D2D;
+    color: var(--text-danger);
     padding: 1rem 1.25rem;
-    background: #FCEBEB;
+    background: var(--bg-danger);
     border-radius: var(--radius-md);
   }
 
   @media (max-width: 480px) {
-    .race-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+    .race-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
     .title { font-size: 20px; }
   }
 </style>
@@ -300,7 +276,6 @@
   <div id="content"><div class="status-msg">日付を選んでデータを取得してください</div></div>
 
 </div>
-
 <script>
 const API = "https://blinker-api-production.up.railway.app";
 
@@ -336,7 +311,7 @@ async function loadData() {
       return;
     }
     renderData(json);
-  } catch (e) {
+  } catch(e) {
     document.getElementById("content").innerHTML = '<div class="error-msg">APIに接続できませんでした。しばらく待ってから再試行してください。</div>';
   }
 }
@@ -351,10 +326,15 @@ function renderData(json) {
   }
 
   const venues = Object.keys(results);
-  let totalHorses = 0, totalRaces = 0;
+  let totalHorses = 0, totalRaces = 0, totalHit = 0;
   venues.forEach(v => {
     Object.values(results[v]).forEach(horses => {
-      if (horses.length > 0) { totalRaces++; totalHorses += horses.length; }
+      if (!Array.isArray(horses) || horses.length === 0) return;
+      totalRaces++;
+      horses.forEach(h => {
+        totalHorses++;
+        if (h.着順 && h.着順 !== "-") totalHit++;
+      });
     });
   });
 
@@ -371,6 +351,11 @@ function renderData(json) {
       <div class="metric-sub">頭</div>
     </div>
     <div class="metric">
+      <div class="metric-label">3着以内</div>
+      <div class="metric-value">${totalHit}</div>
+      <div class="metric-sub">${totalHorses > 0 ? Math.round(totalHit / totalHorses * 100) + "%" : "-"}</div>
+    </div>
+    <div class="metric">
       <div class="metric-label">該当レース</div>
       <div class="metric-value">${totalRaces}</div>
       <div class="metric-sub">レース</div>
@@ -385,25 +370,47 @@ function renderData(json) {
 
   let html = "";
   for (const [venue, races] of Object.entries(results)) {
-    const count = Object.values(races).reduce((s, h) => s + h.length, 0);
-    html += `
-      <div class="venue-section">
-        <div class="venue-header">
-          ${venue}
-          <span class="venue-badge">Bマーク ${count}頭</span>
-        </div>
-        <div class="race-grid">
-    `;
+    const count = Object.values(races).filter(h => Array.isArray(h) && h.length > 0).reduce((s, h) => s + h.length, 0);
+    html += `<div class="venue-section">
+      <div class="venue-header">${venue}<span class="venue-badge">Bマーク ${count}頭</span></div>
+      <div class="race-grid">`;
+
     for (const [race, horses] of Object.entries(races)) {
-      const has = horses.length > 0;
-      html += `<div class="race-card ${has ? "has-horse" : ""}">
+      const hasHorse = Array.isArray(horses) && horses.length > 0;
+      const hasHit = hasHorse && horses.some(h => h.着順 && h.着順 !== "-");
+
+      html += `<div class="race-card ${hasHorse ? "has-horse" : ""} ${hasHit ? "has-hit" : ""}">
         <div class="race-label">${race}</div>`;
-      if (has) {
-        horses.forEach(h => {
-          html += `<div class="horse-row">
-            <div class="horse-num">${h.馬番}</div>
-            <div class="horse-name">${h.馬名}</div>
-          </div>`;
+
+      if (hasHorse) {
+        horses.forEach((h, idx) => {
+          if (idx > 0) html += `<div class="divider"></div>`;
+          html += `<div class="horse-block">
+            <div class="horse-row">
+              <div class="horse-num">${h.馬番}</div>
+              <div class="horse-name">${h.馬名}</div>
+            </div>`;
+
+          if (h.has_result === true) {
+            const isHit = h.着順 && h.着順 !== "-";
+            html += `<div class="result-row">`;
+            if (isHit) {
+              html += `<span class="rank-badge rank-hit">${h.着順}着</span>`;
+              if (Array.isArray(h.fukusho)) {
+                const f = h.fukusho.find(x => String(x.馬番) === String(h.馬番));
+                if (f && f.払戻) {
+                  html += `<span class="fukusho-badge">複勝 ${f.払戻}</span>`;
+                }
+              }
+            } else {
+              html += `<span class="rank-badge rank-miss">圏外</span>`;
+            }
+            html += `</div>`;
+          } else if (h.has_result === false) {
+            html += `<div class="result-row"><span class="rank-badge rank-pending">発走前</span></div>`;
+          }
+
+          html += `</div>`;
         });
       } else {
         html += `<div class="no-horse">なし</div>`;
