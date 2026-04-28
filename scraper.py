@@ -113,12 +113,15 @@ async def get_race_result(page, race_id: str):
             const fukusho = [];
             const fukushoRow = document.querySelector('tr.Fukusho');
             if (fukushoRow) {
-                // td.Resultの全spanテキストを取得（空白除去後に空でないもの）
-                const allSpans = fukushoRow.querySelectorAll('td.Result span');
-                const numList = Array.from(allSpans)
-                    .map(s => s.textContent.trim())
-                    .filter(s => s !== '');
-                // td.PayoutのinnerHTMLをbrで分割
+                // divは3つで1頭分。0番目, 3番目, 6番目が馬番
+                const divs = Array.from(fukushoRow.querySelectorAll('td.Result div'));
+                const numList = [];
+                for (let i = 0; i < divs.length; i += 3) {
+                    const span = divs[i].querySelector('span');
+                    const num = span ? span.textContent.trim() : '';
+                    if (num !== '') numList.push(num);
+                }
+                // 払戻金額をbrで分割
                 const payoutEl = fukushoRow.querySelector('td.Payout span');
                 const payouts = payoutEl
                     ? payoutEl.innerHTML.split(/<br\s*\/?>/i)
