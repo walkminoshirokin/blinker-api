@@ -132,10 +132,23 @@ async def get_race_result(page, race_id: str):
                 });
             }
 
-            return { top3, fukusho, has_result: top3.length > 0 };
+            // 単勝払戻を取得
+            const tansho = [];
+            const tanshoRow = document.querySelector('tr.Tansho');
+            if (tanshoRow) {
+                const divs = Array.from(tanshoRow.querySelectorAll('td.Result div'));
+                // 0番目のdivが馬番
+                const span = divs[0] ? divs[0].querySelector('span') : null;
+                const num = span ? span.textContent.trim() : '';
+                const payoutEl = tanshoRow.querySelector('td.Payout span');
+                const payout = payoutEl ? payoutEl.textContent.trim() : '';
+                if (num !== '') tansho.push({ 馬番: num, 払戻: payout });
+            }
+
+            return { top3, fukusho, tansho, has_result: top3.length > 0 };
         }""")
     except Exception:
-        return {"top3": [], "fukusho": [], "has_result": False}
+        return {"top3": [], "fukusho": [], "tansho": [], "has_result": False}
 
 
 async def run_scraping(date_str: str = None):
@@ -174,6 +187,7 @@ async def run_scraping(date_str: str = None):
                             "has_result": race_result["has_result"],
                             "top3": race_result["top3"],
                             "fukusho": race_result["fukusho"],
+                            "tansho": race_result["tansho"],
                             "着順": chakujun,
                         })
                     all_results[basho][f"{i}R"] = race_entries
