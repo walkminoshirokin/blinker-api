@@ -95,18 +95,17 @@ async def get_race_result(page, race_id: str):
         await page.wait_for_timeout(1000)
         return await page.evaluate("""() => {
             const top3 = [];
-            const rows = document.querySelectorAll('table tr');
+            const rows = document.querySelectorAll('tr.HorseList');
             for (const row of rows) {
-                const cells = row.querySelectorAll('td');
-                if (cells.length < 4) continue;
-                const rank = cells[0].textContent.trim();
-                if (['1', '2', '3'].includes(rank)) {
-                    top3.push({
-                        着順: rank,
-                        馬番: cells[1].textContent.trim(),
-                        馬名: cells[3].textContent.trim()
-                    });
-                }
+                const rankEl = row.querySelector('.Rank');
+                const rank = rankEl ? rankEl.textContent.trim() : '';
+                if (!['1', '2', '3'].includes(rank)) continue;
+                const cells = row.querySelectorAll('td.Num');
+                // cells[0]=枠番, cells[1]=馬番
+                const umaNum = cells[1] ? cells[1].textContent.trim() : '';
+                const nameEl = row.querySelector('.HorseNameSpan');
+                const umaName = nameEl ? nameEl.textContent.trim() : '';
+                top3.push({ 着順: rank, 馬番: umaNum, 馬名: umaName });
                 if (top3.length >= 3) break;
             }
 
