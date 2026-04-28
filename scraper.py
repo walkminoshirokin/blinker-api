@@ -113,18 +113,17 @@ async def get_race_result(page, race_id: str):
             const fukusho = [];
             const fukushoRow = document.querySelector('tr.Fukusho');
             if (fukushoRow) {
-                // divごとに馬番を取得（divが1頭分のブロック、3divで1頭）
-                const divs = fukushoRow.querySelectorAll('td.Result div');
-                const numList = [];
-                for (let i = 0; i < divs.length; i += 3) {
-                    const span = divs[i] ? divs[i].querySelector('span') : null;
-                    const num = span ? span.textContent.trim() : '';
-                    if (num !== '') numList.push(num);
-                }
-                // 払戻金額（<br>区切り）
+                // td.Resultの全spanテキストを取得（空白除去後に空でないもの）
+                const allSpans = fukushoRow.querySelectorAll('td.Result span');
+                const numList = Array.from(allSpans)
+                    .map(s => s.textContent.trim())
+                    .filter(s => s !== '');
+                // td.PayoutのinnerHTMLをbrで分割
                 const payoutEl = fukushoRow.querySelector('td.Payout span');
                 const payouts = payoutEl
-                    ? payoutEl.innerHTML.split('<br>').map(s => s.replace(/<[^>]+>/g, '').trim()).filter(Boolean)
+                    ? payoutEl.innerHTML.split(/<br\s*\/?>/i)
+                        .map(s => s.replace(/<[^>]+>/g, '').trim())
+                        .filter(Boolean)
                     : [];
                 numList.forEach((num, i) => {
                     fukusho.push({ 馬番: num, 払戻: payouts[i] || '' });
@@ -160,10 +159,11 @@ async def run_scraping(date_str: str = None):
                     race_result = await get_race_result(page, race_id)
                     race_entries = []
                     for horse in horses:
-                        uma_num = str(horse["馬番"])
+                        uma_num = str(horse["馬番"])  # 数値→文字列に統一
                         chakujun = "-"
                         for t in race_result["top3"]:
-                            if t["馬番"] == uma_num:
+                            # 両方strip()して比較
+                            if t["馬番"].strip() == uma_num.strip():
                                 chakujun = t["着順"]
                                 break
                         race_entries.append({
