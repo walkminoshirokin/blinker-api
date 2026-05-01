@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -77,6 +77,23 @@ async def scrape_all(date: str = Query(None, description="日付 (例: 20260427)
         data = json.load(f)
     logger.info("GET /scrape/all 返却: saved_at=%s", data.get("saved_at"))
     return JSONResponse(content=data, media_type="application/json; charset=utf-8")
+
+
+@app.post("/scrape/run/tomorrow")
+async def scrape_run_tomorrow():
+    tomorrow = datetime.now(JST) + timedelta(days=1)
+    date_str = tomorrow.strftime("%Y%m%d")
+    logger.info("POST /scrape/run/tomorrow: date=%s", date_str)
+    try:
+        results = await run_scraping(date_str)
+        total = sum(len(races) for races in results.values())
+        return JSONResponse(
+            content={"message": "翌日スクレイピング完了", "date": date_str, "venues": len(results), "total_races": total},
+            media_type="application/json; charset=utf-8",
+        )
+    except Exception as e:
+        logger.error("POST /scrape/run/tomorrow エラー: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/scrape/run")
