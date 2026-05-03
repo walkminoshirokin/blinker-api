@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 def create_scheduler():
     scheduler = AsyncIOScheduler(timezone=JST)
-    # 毎日6時JSTに翌日データ生成＋当日データ更新
+    # 毎日6時JSTに前日データ回収率更新＋翌日データ先行生成
     scheduler.add_job(
         run_scraping_both,
         "cron",
@@ -23,21 +23,21 @@ def create_scheduler():
 
 async def run_scraping_both():
     today = datetime.now(JST)
-    today_str = today.strftime("%Y%m%d")
+    yesterday_str = (today - timedelta(days=1)).strftime("%Y%m%d")
     tomorrow_str = (today + timedelta(days=1)).strftime("%Y%m%d")
 
-    # 当日データ更新
-    logger.info("定時バッチ開始（当日）: %s", today_str)
+    # 前日データの回収率更新
+    logger.info("定時バッチ開始（前日更新）: %s", yesterday_str)
     try:
-        await run_scraping(today_str)
-        logger.info("定時バッチ完了（当日）: %s", today_str)
+        await run_scraping(yesterday_str)
+        logger.info("定時バッチ完了（前日更新）: %s", yesterday_str)
     except Exception as e:
-        logger.error("定時バッチエラー（当日）: %s", e)
+        logger.error("定時バッチエラー（前日更新）: %s", e)
 
-    # 翌日データ生成
-    logger.info("定時バッチ開始（翌日）: %s", tomorrow_str)
+    # 翌日データの先行生成
+    logger.info("定時バッチ開始（翌日生成）: %s", tomorrow_str)
     try:
         await run_scraping(tomorrow_str)
-        logger.info("定時バッチ完了（翌日）: %s", tomorrow_str)
+        logger.info("定時バッチ完了（翌日生成）: %s", tomorrow_str)
     except Exception as e:
-        logger.error("定時バッチエラー（翌日）: %s", e)
+        logger.error("定時バッチエラー（翌日生成）: %s", e)
