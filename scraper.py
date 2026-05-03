@@ -76,7 +76,9 @@ async def get_blinker_horses(page, race_id: str):
             const dataIndex = dl ? dl.getAttribute('data-index') : null;
             const umaNum = dataIndex !== null ? parseInt(dataIndex) + 1 : '?';
 
-            results.push({ 馬番: umaNum, 馬名: horseName });
+            const kyakushitsuEl = dl ? dl.querySelector('dt.Horse06 .Type span') : null;
+            const kyakushitsu = kyakushitsuEl ? kyakushitsuEl.textContent.trim() : '';
+            results.push({ 馬番: umaNum, 馬名: horseName, 脚質: kyakushitsu });
         });
 
         return results;
