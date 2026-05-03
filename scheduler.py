@@ -26,13 +26,18 @@ async def run_scraping_both():
     yesterday_str = (today - timedelta(days=1)).strftime("%Y%m%d")
     tomorrow_str = (today + timedelta(days=1)).strftime("%Y%m%d")
 
-    # 前日データの回収率更新
-    logger.info("定時バッチ開始（前日更新）: %s", yesterday_str)
-    try:
-        await run_scraping(yesterday_str)
-        logger.info("定時バッチ完了（前日更新）: %s", yesterday_str)
-    except Exception as e:
-        logger.error("定時バッチエラー（前日更新）: %s", e)
+    # 前日データが存在すれば結果を更新
+    from pathlib import Path
+    yesterday_path = Path(f"/app/data/result_{yesterday_str}.json")
+    if yesterday_path.exists():
+        logger.info("定時バッチ開始（前日結果更新）: %s", yesterday_str)
+        try:
+            await run_scraping(yesterday_str)
+            logger.info("定時バッチ完了（前日結果更新）: %s", yesterday_str)
+        except Exception as e:
+            logger.error("定時バッチエラー（前日結果更新）: %s", e)
+    else:
+        logger.info("前日データなし、スキップ: %s", yesterday_str)
 
     # 翌日データの先行生成
     logger.info("定時バッチ開始（翌日生成）: %s", tomorrow_str)
